@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import Header from "./Header.js";
 import MoviesList from "./MoviesLists.js";
 import Footer from "./Pagination.js";
@@ -13,29 +13,35 @@ export default function App() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOption, setSortOption] = useState("option1");
 
-  const options = {
-    method: "GET",
-    headers: {
-      accept: "application/json",
-      Authorization: `Bearer ${API_KEY}`,
-    },
-  };
+  const options = useMemo(
+    () => ({
+      method: "GET",
+      headers: {
+        accept: "application/json",
+        Authorization: `Bearer ${API_KEY}`,
+      },
+    }),
+    [],
+  );
 
-  const fetchMovies = async (page = 1) => {
-    const url = `${PAGE_URL}${page}`;
-    try {
-      const response = await fetch(url, options);
-      if (!response.ok)
-        throw new Error(`HTTP error! status: ${response.status}`); // Fixed: added ()
-      const data = await response.json();
-      setMovies(data.results);
-      setDisplayedMovies(data.results);
-      setTotalPages(data.total_pages);
-      setCurrentPage(page);
-    } catch (error) {
-      console.error("Error fetching movies", error);
-    }
-  };
+  const fetchMovies = useCallback(
+    async (page = 1) => {
+      const url = `${PAGE_URL}${page}`;
+      try {
+        const response = await fetch(url, options);
+        if (!response.ok)
+          throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
+        setMovies(data.results);
+        setDisplayedMovies(data.results);
+        setTotalPages(data.total_pages);
+        setCurrentPage(page);
+      } catch (error) {
+        console.error("Error fetching movies", error);
+      }
+    },
+    [options],
+  );
 
   const searchMovies = async (query, page = 1) => {
     if (!query.trim()) {
@@ -120,7 +126,7 @@ export default function App() {
 
   useEffect(() => {
     fetchMovies(1);
-  }, []);
+  }, [fetchMovies]);
 
   return (
     <div className="app">
